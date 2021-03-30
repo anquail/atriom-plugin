@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const fetch = require("node-fetch");
 const AutomaticVendorFederation = require("@module-federation/automatic-vendor-federation");
-const convertToGraph = require("./convertToGraph");
+const convertToGraph = require("atriom-plugin-new/convertToGraph");
 
 /** @typedef {import('webpack/lib/Compilation')} Compilation */
 /** @typedef {import('webpack/lib/Compiler')} Compiler */
@@ -32,6 +32,7 @@ class FederationDashboardPlugin {
     const FederationPlugin = compiler.options.plugins.find((plugin) => {
       return plugin.constructor.name === "ModuleFederationPlugin";
     });
+    // FederAtionPluginOptions stores options object passed into the FEDERATION PLUGIN (NOT dashboard plugin)
     let FederationPluginOptions;
     if (FederationPlugin) {
       FederationPluginOptions = FederationPlugin._options;
@@ -40,11 +41,16 @@ class FederationDashboardPlugin {
     compiler.hooks.afterDone.tap(PLUGIN_NAME, (liveStats) => {
       const stats = liveStats.toJson();
 
+      // store in |modules| an array of module objects that are relevant
       const modules = stats.modules.filter((module) => {
         const array = [
+          //container entry - local modules??? This references SearchContent.jsx in search app
           module.name.includes("container entry"),
+          // remote - modules brought in from other apps
           module.name.includes("remote "),
+          // shared - shared dependencies (react, redux, etc.)
           module.name.includes("shared module "),
+          // unsure - none in search app
           module.name.includes("provide module "),
         ];
         return array.some((item) => item);
@@ -56,9 +62,9 @@ class FederationDashboardPlugin {
             if (reason.userRequest) {
               try {
                 // grab user required package.json
+                // grab all package.json files!!??
                 const subsetPackage = require(reason.userRequest +
                   "/package.json");
-
                 directReasons.add(subsetPackage);
               } catch (e) {}
             }
@@ -66,16 +72,20 @@ class FederationDashboardPlugin {
         }
       });
       // get RemoteEntryChunk
+      // find chunk associated with current app - find first chunk in stats.chunks with a name that matches the current app
       const RemoteEntryChunk = stats.chunks.find((chunk) => {
         const specificChunk = chunk.names.find((name) => {
           return name === FederationPluginOptions.name;
         });
         return specificChunk;
       });
-
+      // use liveStats.compilation.namedChunks (JS Map!!!)
+      // get chunk that is associated with the current application (getting this by using the chunk associated with FederationPluginOptions.name, which stores the current app name (as provided in the webpack config as options to the ModuleFederationPlugin))
       const namedChunkRefs = liveStats.compilation.namedChunks.get(
         FederationPluginOptions.name
       );
+
+      // AllReferencedChunksByRemote is a Set (or array if namedChunkRefs is falsey) -- see ModuleFederationDashboardNotes.js for obj structure
       const AllReferencedChunksByRemote = namedChunkRefs
         ? namedChunkRefs.getAllReferencedChunks()
         : [];
@@ -83,9 +93,11 @@ class FederationDashboardPlugin {
       const validChunkArray = [];
       AllReferencedChunksByRemote.forEach((chunk) => {
         if (chunk.id !== FederationPluginOptions.name) {
+          // will chunk.id ever equal FederationPluginOptions.name?? - FederationPluginOptions.name refers to the name of the application
           validChunkArray.push(chunk);
         }
       });
+      // validChunkArray is now an array of chunk objects (in this case, identical to the AllReferencedChunksByRemote Set???) - why are we making a validChunkArray?
 
       function mapToObjectRec(m) {
         let lo = {};
@@ -177,6 +189,19 @@ class FederationDashboardPlugin {
           fs.writeFile(hashPath, dashData, { encoding: "utf-8" }, () => {});
         }
 
+        // console.log('HERE IS THE dashData AAAAAHHHH!!!!!!!!!!!!!!!!', dashData)
+        const filePathAtriom = path.join(
+          __dirname,
+          "../../dashboard-data/ATRIOM.json"
+        );
+
+        fs.appendFile(
+          filePathAtriom,
+          dashData + ",",
+          { encoding: "utf-8" },
+          () => {}
+        );
+
         const statsPath = path.join(stats.outputPath, "stats.json");
         fs.writeFile(
           statsPath,
@@ -185,26 +210,26 @@ class FederationDashboardPlugin {
           () => {}
         );
 
-        if (this._options.dashboardURL) {
-          new Promise((resolve) => {
-            fetch(this._options.dashboardURL, {
-              method: "POST",
-              body: dashData,
-              headers: {
-                Accept: "application/json",
-                "Content-type": "application/json",
-              },
-            })
-              .then((resp) => resp.json())
-              .then(resolve)
-              .catch(() => {
-                console.warn(
-                  `Error posting data to dashboard URL: ${this._options.dashboardURL}`
-                );
-                resolve();
-              });
-          });
-        }
+        // if (this._options.dashboardURL) {
+        //   new Promise((resolve) => {
+        //     fetch(this._options.dashboardURL, {
+        //       method: "POST",
+        //       body: dashData,
+        //       headers: {
+        //         Accept: "application/json",
+        //         "Content-type": "application/json",
+        //       },
+        //     })
+        //       .then((resp) => resp.json())
+        //       .then(resolve)
+        //       .catch(() => {
+        //         console.warn(
+        //           `Error posting data to dashboard URL: ${this._options.dashboardURL}`
+        //         );
+        //         resolve();
+        //       });
+        //   });
+        // }
       }
     });
   }
