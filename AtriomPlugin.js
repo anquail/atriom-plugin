@@ -1,8 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const fetch = require("node-fetch");
 const AutomaticVendorFederation = require("@module-federation/automatic-vendor-federation");
-const convertToGraph = require("atriom-plugin-new/convertToGraph");
+const convertToGraph = require("./convertToGraph");
 
 /** @typedef {import('webpack/lib/Compilation')} Compilation */
 /** @typedef {import('webpack/lib/Compiler')} Compiler */
@@ -15,7 +14,7 @@ const convertToGraph = require("atriom-plugin-new/convertToGraph");
 
 const PLUGIN_NAME = "FederationDashboardPlugin";
 
-class FederationDashboardPlugin {
+class AtriomPlugin {
   /**
    *
    * @param {FederationDashboardPluginOptions} options
@@ -192,7 +191,8 @@ class FederationDashboardPlugin {
         // console.log('HERE IS THE dashData AAAAAHHHH!!!!!!!!!!!!!!!!', dashData)
         const filePathAtriom = path.join(
           __dirname,
-          "../../dashboard-data/ATRIOM.json"
+          // "../../dashboard-data/ATRIOM.json"
+          "../../../ATRIOM.json"
         );
 
         fs.appendFile(
@@ -235,4 +235,4 @@ class FederationDashboardPlugin {
   }
 }
 
-module.exports = FederationDashboardPlugin;
+module.exports = AtriomPlugin;
