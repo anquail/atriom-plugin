@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const AutomaticVendorFederation = require("@module-federation/automatic-vendor-federation");
-const convertToGraph = require("atriom-plugin-new/convertToGraph");
+const convertToGraph = require("./convertToGraph");
 
 /** @typedef {import('webpack/lib/Compilation')} Compilation */
 /** @typedef {import('webpack/lib/Compiler')} Compiler */
