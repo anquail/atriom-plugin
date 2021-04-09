@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const fetch = require("node-fetch");
 const AutomaticVendorFederation = require("@module-federation/automatic-vendor-federation");
 const convertToGraph = require("atriom-plugin-new/convertToGraph");
 
@@ -8,17 +7,17 @@ const convertToGraph = require("atriom-plugin-new/convertToGraph");
 /** @typedef {import('webpack/lib/Compiler')} Compiler */
 
 /**
- * @typedef FederationDashboardPluginOptions
+ * @typedef AtriomPluginOptions
  * @property {string} filename
  * @property {function} reportFunction
  */
 
-const PLUGIN_NAME = "FederationDashboardPlugin";
+const PLUGIN_NAME = "AtriomPlugin";
 
-class FederationDashboardPlugin {
+class AtriomPlugin {
   /**
    *
-   * @param {FederationDashboardPluginOptions} options
+   * @param {AtriomPluginOptions} options
    */
   constructor(options) {
     this._options = options;
@@ -189,10 +188,9 @@ class FederationDashboardPlugin {
           fs.writeFile(hashPath, dashData, { encoding: "utf-8" }, () => {});
         }
 
-        // console.log('HERE IS THE dashData AAAAAHHHH!!!!!!!!!!!!!!!!', dashData)
         const filePathAtriom = path.join(
           __dirname,
-          "../../dashboard-data/ATRIOM.json"
+          "../../dashboard-data/ATRIOM.dat"
         );
 
         fs.appendFile(
@@ -209,30 +207,9 @@ class FederationDashboardPlugin {
           { encoding: "utf-8" },
           () => {}
         );
-
-        // if (this._options.dashboardURL) {
-        //   new Promise((resolve) => {
-        //     fetch(this._options.dashboardURL, {
-        //       method: "POST",
-        //       body: dashData,
-        //       headers: {
-        //         Accept: "application/json",
-        //         "Content-type": "application/json",
-        //       },
-        //     })
-        //       .then((resp) => resp.json())
-        //       .then(resolve)
-        //       .catch(() => {
-        //         console.warn(
-        //           `Error posting data to dashboard URL: ${this._options.dashboardURL}`
-        //         );
-        //         resolve();
-        //       });
-        //   });
-        // }
       }
     });
   }
 }
 
-module.exports = FederationDashboardPlugin;
+module.exports = AtriomPlugin;
